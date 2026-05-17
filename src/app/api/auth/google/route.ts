@@ -41,7 +41,12 @@ export async function POST(request: Request) {
           name,
           email,
           password: 'oauth_managed_identity_lock',
-          role: (email.endsWith('@admin.com') || email.endsWith('@sana.com')) ? 'ADMIN' : 'USER',
+          role: (
+            email.endsWith('@admin.com') ||
+            email.endsWith('@sana.com') ||
+            email.endsWith('@sana.in') ||
+            email === 'ssridharan449@gmail.com'
+          ) ? 'ADMIN' : 'USER',
         }
       });
     }
