@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String       @id @default(uuid())
+  name       String
+  email      String       @unique
+  password   String
+  role       String       @default("USER")
+  orders     Order[]
+  profile    UserProfile?
+  addresses  Address[]
+  created_at DateTime     @default(now())
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  category    String
+  image_url   String?
+  status      String   @default("Active")
+  created_at  DateTime @default(now())
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  total           Float
+  status          String      @default("Processing")
+  payment_status  String      @default("PENDING")
+  payment_method  String?
+  screenshot_path String?
+  payment_id      String?     @unique
+  items           OrderItem[]
+  created_at      DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id])
+  productId String
+  name      String
+  price     Float
+  quantity  Int
+}
+
+model PasswordReset {
+  id          String   @id @default(uuid())
+  email       String
+  otp         String
+  expiry_time DateTime
+  created_at  DateTime @default(now())
+}
+
+model UserProfile {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id])
+  mobile           String?
+  alternate_mobile String?
+  address_line_1   String?
+  address_line_2   String?
+  city             String?
+  state            String?
+  pincode          String?
+  country          String?
+}
+
+model Address {
+  id         String  @id @default(uuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id])
+  address    String
+  is_default Boolean @default(false)
+}
