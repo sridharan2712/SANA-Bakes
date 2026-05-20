@@ -20,12 +20,17 @@ export function Footer() {
                 SANA<span className="text-rose-500">.</span>
               </span>
             </Link>
-            <p className="text-sm text-gray-400 leading-relaxed mb-6">
+            <p className="text-sm text-gray-400 leading-relaxed mb-4">
               Enterprise-grade corporate cake delivery platform providing premium, handcrafted bakes for meaningful celebrations.
             </p>
+            <address className="text-sm text-gray-400 leading-relaxed mb-6 not-italic">
+              R.Abirami 78, Kalaingar Salai, VVG Nagar,<br />
+              Vengamedu, Karur-639006<br />
+              Contact: 82488 41919
+            </address>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition-colors"><Facebook className="h-5 w-5" /></a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors"><Instagram className="h-5 w-5" /></a>
+              <a href="https://www.instagram.com/sana_homebakes_karur_with_love?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors"><Instagram className="h-5 w-5" /></a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors"><Twitter className="h-5 w-5" /></a>
             </div>
           </div>
