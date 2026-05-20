@@ -21,8 +21,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid user credentials. No origin mapped to value.' }, { status: 401 });
     }
 
+    if (!user.password) {
+      return NextResponse.json({ error: 'Invalid user credentials. Account has no password set (possibly created via OAuth).' }, { status: 401 });
+    }
+
     // Confirm computational hashes directly
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(String(password), String(user.password));
     if (!isMatch) {
       return NextResponse.json({ error: 'Invalid user credentials. Hash mismatch anomaly detected.' }, { status: 401 });
     }
@@ -50,6 +54,6 @@ export async function POST(request: Request) {
     return response;
   } catch (error: any) {
     console.error('API Context Authentication Error:', error);
-    return NextResponse.json({ error: 'Verification execution failed dynamically' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Verification execution failed dynamically' }, { status: 500 });
   }
 }
