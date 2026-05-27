@@ -215,11 +215,11 @@ export default function CheckoutPage() {
         setIsSuccess(true);
         dispatch(clearCart());
       } else {
-        toast.error("Order creation failed");
+        toast.error("Order creation failed. Your money has not been debited.");
       }
     } catch (error: any) {
        console.error(error);
-       toast.error("An error occurred while confirming your order.");
+       toast.error("An error occurred while confirming your order. Your money has not been debited.");
     } finally {
        setIsProcessing(false);
     }
