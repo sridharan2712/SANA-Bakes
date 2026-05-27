@@ -204,7 +204,32 @@ export default function CheckoutPage() {
       const res = await axios.post('/api/create-order', { amount: total });
       const orderData = res.data;
 
-      // 2. Initialize Razorpay
+      // 2. Initialize Razorpay (or simulate test mode)
+      if (orderData.order_id.startsWith('order_dummy_')) {
+        toast.info("Test Mode: Simulating secure payment processing...");
+        setTimeout(async () => {
+          try {
+            const dbRes = await axios.post('/api/orders', {
+              items,
+              total,
+              screenshot_path: 'RAZORPAY_TEST_SIMULATION',
+              payment_method: 'RAZORPAY_TEST'
+            });
+            if (dbRes.data.success) {
+              setIsSuccess(true);
+              dispatch(clearCart());
+            } else {
+              toast.error("Order creation failed in Test Mode.");
+            }
+          } catch (err) {
+            toast.error("Test mode simulation failed.");
+          } finally {
+            setIsProcessing(false);
+          }
+        }, 1500);
+        return;
+      }
+
       const options = {
         key: orderData.key_id,
         amount: orderData.amount,

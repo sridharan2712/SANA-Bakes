@@ -20,6 +20,15 @@ export async function POST(request: Request) {
       receipt: `receipt_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
     };
 
+    if (process.env.RAZORPAY_SECRET?.includes('dummy') || process.env.RAZORPAY_SECRET === 'dummy_secret') {
+      return NextResponse.json({
+        order_id: 'order_dummy_' + Date.now(),
+        amount: Math.round(amount * 100),
+        currency: 'INR',
+        key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_dummy_key',
+      });
+    }
+
     const order = await razorpay.orders.create(options);
 
     return NextResponse.json({
