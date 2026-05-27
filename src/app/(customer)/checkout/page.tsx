@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { QRCodeSVG } from 'qrcode.react';
+import Script from 'next/script';
 
 export default function CheckoutPage() {
   const { items } = useAppSelector((state) => state.cart);
@@ -194,32 +195,72 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleConfirmOrder = async (e: React.FormEvent) => {
+  const handleRazorpayPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!screenshotPath) {
-      toast.error("Please upload payment screenshot to confirm the order.");
-      return;
-    }
-    
     setIsProcessing(true);
 
     try {
-      const { data } = await axios.post('/api/orders', {
-        items,
-        total,
-        screenshot_path: screenshotPath,
-        payment_method: 'UPI'
-      });
+      // 1. Create order on backend
+      const res = await axios.post('/api/create-order', { amount: total });
+      const orderData = res.data;
 
-      if (data.success) {
-        setIsSuccess(true);
-        dispatch(clearCart());
-      } else {
-        toast.error("Order creation failed. Your money has not been debited.");
-      }
+      // 2. Initialize Razorpay
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'SANA Bakes',
+        description: 'Order Payment',
+        order_id: orderData.order_id,
+        handler: async function (response: any) {
+          try {
+            // 3. Verify payment signature
+            const verifyRes = await axios.post('/api/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.data.verified) {
+              // 4. Save order
+              const dbRes = await axios.post('/api/orders', {
+                items,
+                total,
+                screenshot_path: 'RAZORPAY_AUTOMATIC',
+                payment_method: 'RAZORPAY'
+              });
+
+              if (dbRes.data.success) {
+                setIsSuccess(true);
+                dispatch(clearCart());
+              } else {
+                toast.error("Order creation failed. Your money has not been debited.");
+              }
+            } else {
+              toast.error("Payment verification failed. Your money has not been debited.");
+            }
+          } catch (err) {
+            toast.error("An error occurred during verification. Your money has not been debited.");
+          }
+        },
+        prefill: {
+          name: contactForm.firstName + ' ' + contactForm.lastName,
+          email: contactForm.email,
+          contact: contactForm.phone,
+        },
+        theme: {
+          color: '#e11d48',
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        toast.error(`Payment failed: ${response.error.description}`);
+      });
+      rzp.open();
     } catch (error: any) {
        console.error(error);
-       toast.error("An error occurred while confirming your order. Your money has not been debited.");
+       toast.error(error.response?.data?.error || "Error initiating payment.");
     } finally {
        setIsProcessing(false);
     }
@@ -258,6 +299,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen py-12">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex items-center text-sm text-gray-500 mb-8">
@@ -268,7 +310,7 @@ export default function CheckoutPage() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            <form onSubmit={handleConfirmOrder} className="space-y-8">
+            <div className="space-y-8">
               
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h2 className="text-xl font-semibold text-slate-900 mb-6">Contact Information</h2>
@@ -320,158 +362,23 @@ export default function CheckoutPage() {
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <h2 className="text-xl font-semibold text-slate-900 mb-6">Payment Method (UPI)</h2>
+                <h2 className="text-xl font-semibold text-slate-900 mb-6">Payment Method (Secure Online Payment)</h2>
                 
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
                   <p className="text-sm text-blue-800 font-medium mb-1">Payment Instructions:</p>
-                  <ol className="list-decimal pl-4 text-sm text-blue-700 space-y-1">
-                    <li>Pay exactly <strong>₹{total.toLocaleString()}</strong> using the options below.</li>
-                    <li>Take a screenshot of the successful payment.</li>
-                    <li>Upload the screenshot to confirm your order.</li>
-                  </ol>
-                </div>
-
-                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 items-start">
-                  <div className="mt-0.5 text-amber-600 flex-shrink-0">
-                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                       <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clipRule="evenodd" />
-                     </svg>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-amber-900">Manual Amount Entry Required</h4>
-                    <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                      Due to UPI security standards for personal accounts, payment apps like Google Pay require you to **manually enter the exact amount (₹{total.toLocaleString()})** once the app opens.
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">UPI ID to Pay</p>
-                      <p className="text-sm font-semibold text-slate-900 mt-0.5">{upiId}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyUpi}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:border-rose-500 hover:text-rose-600 hover:bg-rose-50/50 shadow-sm transition-all"
-                    >
-                      {copiedUpi ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-green-600 animate-in fade-in zoom-in-75 duration-250" />
-                          <span className="text-green-600 font-medium">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          <span>Copy UPI ID</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Amount to Enter</p>
-                      <p className="text-sm font-bold text-rose-600 mt-0.5">₹{total.toLocaleString()}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyAmount}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:border-rose-500 hover:text-rose-600 hover:bg-rose-50/50 shadow-sm transition-all"
-                    >
-                      {copiedAmount ? (
-                        <>
-                          <Check className="h-3.5 w-3.5 text-green-600 animate-in fade-in zoom-in-75 duration-250" />
-                          <span className="text-green-600 font-medium">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          <span>Copy Amount</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {isMobile ? (
-                  <div className="space-y-4">
-                     <div className="flex items-center text-slate-700 mb-4">
-                        <Smartphone className="h-5 w-5 mr-2" />
-                        <span className="font-medium">Tap to pay with your UPI app</span>
-                     </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <a href={upiIntentUrl} className="flex items-center justify-center p-3 border border-gray-200 rounded-xl hover:border-rose-500 hover:bg-rose-50 transition-colors">
-                           <span className="font-medium text-slate-800">Google Pay</span>
-                        </a>
-                        <a href={upiIntentUrl} className="flex items-center justify-center p-3 border border-gray-200 rounded-xl hover:border-rose-500 hover:bg-rose-50 transition-colors">
-                           <span className="font-medium text-slate-800">PhonePe</span>
-                        </a>
-                        <a href={upiIntentUrl} className="flex items-center justify-center p-3 border border-gray-200 rounded-xl hover:border-rose-500 hover:bg-rose-50 transition-colors">
-                           <span className="font-medium text-slate-800">Paytm</span>
-                        </a>
-                        <a href={upiIntentUrl} className="flex items-center justify-center p-3 border border-gray-200 rounded-xl hover:border-rose-500 hover:bg-rose-50 transition-colors">
-                           <span className="font-medium text-slate-800">Other UPI</span>
-                        </a>
-                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                    <div className="flex items-center text-slate-700 mb-6">
-                        <Monitor className="h-5 w-5 mr-2" />
-                        <span className="font-medium">Scan QR Code using any UPI App</span>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                      <QRCodeSVG value={upiIntentUrl} size={200} level="H" includeMargin={true} />
-                    </div>
-                    <div className="mt-4 text-center">
-                       <p className="text-lg font-bold text-slate-900">UPI ID: {upiId}</p>
-                       <p className="text-sm text-slate-500 mt-1">Amount to pay: ₹{total.toLocaleString()}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-8 border-t border-gray-100 pt-8">
-                   <h3 className="text-lg font-semibold text-slate-900 mb-4">Upload Payment Proof</h3>
-                   <div className="relative group">
-                     <input 
-                       type="file" 
-                       accept="image/jpeg, image/png, image/webp"
-                       onChange={handleFileUpload}
-                       ref={fileInputRef}
-                       className="hidden"
-                     />
-                     <div 
-                       onClick={() => fileInputRef.current?.click()}
-                       className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${screenshotPath ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-rose-400 hover:bg-rose-50'}`}
-                     >
-                       {isUploading ? (
-                         <div className="flex flex-col items-center">
-                           <Loader2 className="h-8 w-8 text-rose-500 animate-spin mb-2" />
-                           <p className="text-sm font-medium text-slate-600">Uploading...</p>
-                         </div>
-                       ) : screenshotPath ? (
-                         <div className="flex flex-col items-center">
-                           <CheckCircle2 className="h-10 w-10 text-green-500 mb-2" />
-                           <p className="text-sm font-medium text-green-700">Screenshot uploaded securely!</p>
-                           <p className="text-xs text-green-600 mt-1 hover:underline">Click to replace</p>
-                         </div>
-                       ) : (
-                         <div className="flex flex-col items-center">
-                           <Upload className="h-10 w-10 text-slate-400 group-hover:text-rose-500 mb-3 transition-colors" />
-                           <p className="text-sm font-medium text-slate-700">Click to upload screenshot</p>
-                           <p className="text-xs text-slate-500 mt-1">JPG, PNG, WEBP up to 5MB</p>
-                         </div>
-                       )}
-                     </div>
-                   </div>
+                  <ul className="list-disc pl-4 text-sm text-blue-700 space-y-1">
+                    <li>Clicking the button below will open a secure payment window.</li>
+                    <li>You can choose to pay via <strong>UPI, Credit/Debit Card, or Netbanking</strong>.</li>
+                    <li>The amount (<strong>₹{total.toLocaleString()}</strong>) will be entered automatically.</li>
+                  </ul>
                 </div>
               </div>
 
-              <Button type="submit" size="lg" disabled={!screenshotPath || isProcessing} className="w-full text-lg h-14 transition-all shadow-md hover:shadow-lg">
-                {isProcessing ? <><Loader2 className="animate-spin h-5 w-5 mr-2" /> Processing Order...</> : (screenshotPath ? `Confirm Order • ₹${total.toLocaleString()}` : 'Upload Screenshot to Confirm Order')}
+              <Button type="button" onClick={handleRazorpayPayment} size="lg" disabled={isProcessing} className="w-full text-lg h-14 transition-all shadow-md hover:shadow-lg">
+                {isProcessing ? <><Loader2 className="animate-spin h-5 w-5 mr-2" /> Processing...</> : `Pay Securely • ₹${total.toLocaleString()}`}
               </Button>
-            </form>
+            </div>
+
           </div>
 
           <div className="w-full lg:w-96 flex-shrink-0">
