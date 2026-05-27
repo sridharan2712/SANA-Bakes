@@ -65,7 +65,7 @@ export default function CheckoutPage() {
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const upiId = "ssridharan449@oksbi";
-  const upiIntentUrl = `upi://pay?pa=${upiId}&pn=CakeShop&am=${total}&cu=INR`;
+  const upiIntentUrl = `upi://pay?pa=${upiId}&pn=CakeShop&am=${total}&cu=INR&mc=5499&mode=02&purpose=00`;
 
   useEffect(() => {
     // Basic device detection

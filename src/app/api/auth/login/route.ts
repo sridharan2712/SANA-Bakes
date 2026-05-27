@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     let user = await prisma.user.findUnique({ where: { email } });
     
     // Auto-create admin if it doesn't exist
-    if (!user && email === 'admin@sana.com' && password === 'admin123') {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+    if (!user && email === 'admin@sana.com') {
+      const hashedPassword = await bcrypt.hash(password, 10);
       user = await prisma.user.create({
         data: {
           email: 'admin@sana.com',
