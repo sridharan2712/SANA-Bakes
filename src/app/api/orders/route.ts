@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const userId = payload.id as string;
 
     const body = await request.json();
-    const { items, total, screenshot_path, payment_method } = body;
+    const { items, total, screenshot_path, payment_method, payment_id } = body;
 
     if (!items || !total || !screenshot_path) {
       return NextResponse.json({ error: 'Missing required order details' }, { status: 400 });
@@ -57,9 +57,10 @@ export async function POST(request: NextRequest) {
         userId,
         total,
         status: "Processing",
-        payment_status: "SCREENSHOT_UPLOADED",
+        payment_status: payment_method === 'RAZORPAY' ? 'VERIFIED' : "SCREENSHOT_UPLOADED",
         payment_method: payment_method || "UPI",
         screenshot_path,
+        payment_id: payment_id || null,
         items: {
           create: items.map((item: any) => ({
             productId: item.id,

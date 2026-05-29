@@ -252,7 +252,8 @@ export default function CheckoutPage() {
                 items,
                 total,
                 screenshot_path: 'RAZORPAY_AUTOMATIC',
-                payment_method: 'RAZORPAY'
+                payment_method: 'RAZORPAY',
+                payment_id: response.razorpay_payment_id
               });
 
               if (dbRes.data.success) {
@@ -264,8 +265,9 @@ export default function CheckoutPage() {
             } else {
               toast.error("Payment verification failed. Your money has not been debited.");
             }
-          } catch (err) {
-            toast.error("An error occurred during verification. Your money has not been debited.");
+          } catch (err: any) {
+            console.error("Verification/Order error:", err);
+            toast.error(err.response?.data?.error || "An error occurred during verification. Your money has not been debited.");
           }
         },
         prefill: {
