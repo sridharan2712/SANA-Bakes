@@ -66,7 +66,7 @@ export default function CheckoutPage() {
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const upiId = "ssridharan449@oksbi";
-  const upiIntentUrl = `upi://pay?pa=${upiId}&pn=CakeShop&cu=INR`;
+  const upiIntentUrl = `upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
 
   useEffect(() => {
     // Basic device detection
@@ -330,6 +330,13 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 space-y-4 w-full">
                     <p className="text-sm text-blue-800 font-medium">Scan QR Code or Use UPI ID to Pay</p>
+                    
+                    {isMobile && (
+                      <a href={upiIntentUrl} className="w-full flex items-center justify-center p-3 bg-rose-600 text-white rounded-lg font-medium shadow-sm hover:bg-rose-700 transition-colors mb-4">
+                        <Smartphone className="h-5 w-5 mr-2" /> Pay via UPI App (GPay, PhonePe)
+                      </a>
+                    )}
+
                     <div className="space-y-3">
                       <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-blue-100">
                         <span className="text-sm font-medium text-gray-700">UPI ID: {upiId}</span>
