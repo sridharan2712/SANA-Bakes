@@ -195,101 +195,35 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleRazorpayPayment = async (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!screenshotPath) {
+      toast.error("Please upload the payment screenshot to proceed.");
+      return;
+    }
+    
     setIsProcessing(true);
 
     try {
-      // 1. Create order on backend
-      const res = await axios.post('/api/create-order', { amount: total });
-      const orderData = res.data;
-
-      // 2. Initialize Razorpay (or simulate test mode)
-      if (orderData.order_id.startsWith('order_dummy_')) {
-        toast.info("Test Mode: Simulating secure payment processing...");
-        setTimeout(async () => {
-          try {
-            const dbRes = await axios.post('/api/orders', {
-              items,
-              total,
-              screenshot_path: 'RAZORPAY_TEST_SIMULATION',
-              payment_method: 'RAZORPAY_TEST'
-            });
-            if (dbRes.data.success) {
-              setIsSuccess(true);
-              dispatch(clearCart());
-            } else {
-              toast.error("Order creation failed in Test Mode.");
-            }
-          } catch (err) {
-            toast.error("Test mode simulation failed.");
-          } finally {
-            setIsProcessing(false);
-          }
-        }, 1500);
-        return;
-      }
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'SANA Bakes',
-        description: 'Order Payment',
-        order_id: orderData.order_id,
-        handler: async function (response: any) {
-          try {
-            // 3. Verify payment signature
-            const verifyRes = await axios.post('/api/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-
-            if (verifyRes.data.verified) {
-              // 4. Save order
-              const dbRes = await axios.post('/api/orders', {
-                items,
-                total,
-                screenshot_path: 'RAZORPAY_AUTOMATIC',
-                payment_method: 'RAZORPAY',
-                payment_id: response.razorpay_payment_id
-              });
-
-              if (dbRes.data.success) {
-                setIsSuccess(true);
-                dispatch(clearCart());
-              } else {
-                toast.error("Order creation failed. Your money has not been debited.");
-              }
-            } else {
-              toast.error("Payment verification failed. Your money has not been debited.");
-            }
-          } catch (err: any) {
-            console.error("Verification/Order error:", err);
-            toast.error(err.response?.data?.error || "An error occurred during verification. Your money has not been debited.");
-          }
-        },
-        prefill: {
-          name: contactForm.firstName + ' ' + contactForm.lastName,
-          email: contactForm.email,
-          contact: contactForm.phone,
-        },
-        theme: {
-          color: '#e11d48',
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        toast.error(`Payment failed: ${response.error.description}`);
+      const dbRes = await axios.post('/api/orders', {
+        items,
+        total,
+        screenshot_path: screenshotPath,
+        payment_method: 'UPI'
       });
-      rzp.open();
-    } catch (error: any) {
-       console.error(error);
-       toast.error(error.response?.data?.error || "Error initiating payment.");
+
+      if (dbRes.data.success) {
+        setIsSuccess(true);
+        dispatch(clearCart());
+      } else {
+        toast.error("Order creation failed.");
+      }
+    } catch (err: any) {
+      console.error("Order error:", err);
+      toast.error(err.response?.data?.error || "An error occurred while placing your order.");
     } finally {
-       setIsProcessing(false);
+      setIsProcessing(false);
     }
   };
 
@@ -326,7 +260,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen py-12">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="flex items-center text-sm text-gray-500 mb-8">
@@ -389,20 +322,75 @@ export default function CheckoutPage() {
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <h2 className="text-xl font-semibold text-slate-900 mb-6">Payment Method (Secure Online Payment)</h2>
+                <h2 className="text-xl font-semibold text-slate-900 mb-6">Payment Method (GPay / UPI)</h2>
                 
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                  <p className="text-sm text-blue-800 font-medium mb-1">Payment Instructions:</p>
-                  <ul className="list-disc pl-4 text-sm text-blue-700 space-y-1">
-                    <li>Clicking the button below will open a secure payment window.</li>
-                    <li>You can choose to pay via <strong>UPI, Credit/Debit Card, or Netbanking</strong>.</li>
-                    <li>The amount (<strong>₹{total.toLocaleString()}</strong>) will be entered automatically.</li>
-                  </ul>
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row gap-6 items-center">
+                  <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                    <QRCodeSVG value={upiIntentUrl} size={150} />
+                  </div>
+                  <div className="flex-1 space-y-4 w-full">
+                    <p className="text-sm text-blue-800 font-medium">Scan QR Code or Use UPI ID to Pay</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-blue-100">
+                        <span className="text-sm font-medium text-gray-700">UPI ID: {upiId}</span>
+                        <button type="button" onClick={handleCopyUpi} className="text-rose-600 hover:text-rose-700 p-1 flex items-center">
+                          {copiedUpi ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-blue-100">
+                        <span className="text-sm font-medium text-gray-700">Amount: ₹{total.toLocaleString()}</span>
+                        <button type="button" onClick={handleCopyAmount} className="text-rose-600 hover:text-rose-700 p-1 flex items-center">
+                          {copiedAmount ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-sm font-medium text-gray-700">Upload Payment Screenshot</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center">
+                    {!screenshotPath ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="w-full border-dashed border-2 py-8 text-gray-500 hover:bg-gray-50 hover:text-rose-600"
+                      >
+                        {isUploading ? <Loader2 className="animate-spin h-6 w-6 mr-2" /> : <Upload className="h-6 w-6 mr-2" />}
+                        {isUploading ? "Uploading..." : "Click to upload screenshot"}
+                      </Button>
+                    ) : (
+                      <div className="w-full relative border rounded-xl overflow-hidden bg-gray-50 p-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-green-600 font-medium flex items-center">
+                            <CheckCircle2 className="h-4 w-4 mr-1" /> Screenshot Uploaded
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setScreenshotPath(null)}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <img src={screenshotPath} alt="Payment Proof" className="max-h-48 mx-auto object-contain rounded" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <Button type="button" onClick={handleRazorpayPayment} size="lg" disabled={isProcessing} className="w-full text-lg h-14 transition-all shadow-md hover:shadow-lg">
-                {isProcessing ? <><Loader2 className="animate-spin h-5 w-5 mr-2" /> Processing...</> : `Pay Securely • ₹${total.toLocaleString()}`}
+              <Button type="button" onClick={handlePlaceOrder} size="lg" disabled={isProcessing || !screenshotPath} className="w-full text-lg h-14 transition-all shadow-md hover:shadow-lg">
+                {isProcessing ? <><Loader2 className="animate-spin h-5 w-5 mr-2" /> Processing...</> : `Confirm Order • ₹${total.toLocaleString()}`}
               </Button>
             </div>
 
