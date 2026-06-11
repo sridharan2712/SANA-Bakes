@@ -22,6 +22,8 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
@@ -68,9 +70,28 @@ export default function CheckoutPage() {
   const upiId = "ssridharan449@oksbi";
   const upiIntentUrl = `upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
 
+  const getAppUrl = (app: 'gpay' | 'phonepe' | 'paytm' | 'generic') => {
+    const params = `pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
+    if (isAndroid) {
+      if (app === 'gpay') return `intent://pay?${params}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+      if (app === 'phonepe') return `intent://pay?${params}#Intent;scheme=upi;package=com.phonepe.app;end`;
+      if (app === 'paytm') return `intent://pay?${params}#Intent;scheme=upi;package=net.one97.paytm;end`;
+      return `intent://pay?${params}#Intent;scheme=upi;end`;
+    }
+    if (isIOS) {
+      if (app === 'gpay') return `gpay://upi/pay?${params}`;
+      if (app === 'phonepe') return `phonepe://pay?${params}`;
+      if (app === 'paytm') return `paytmmp://pay?${params}`;
+    }
+    return `upi://pay?${params}`;
+  };
+
   useEffect(() => {
     // Basic device detection
-    setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    const ua = navigator.userAgent;
+    setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua));
+    setIsAndroid(/Android/i.test(ua));
+    setIsIOS(/iPhone|iPad|iPod/i.test(ua));
 
     const fetchProfile = async () => {
       try {
@@ -332,9 +353,21 @@ export default function CheckoutPage() {
                     <p className="text-sm text-blue-800 font-medium">Scan QR Code or Use UPI ID to Pay</p>
                     
                     {isMobile && (
-                      <a href={upiIntentUrl} className="w-full flex items-center justify-center p-3 bg-rose-600 text-white rounded-lg font-medium shadow-sm hover:bg-rose-700 transition-colors mb-4">
-                        <Smartphone className="h-5 w-5 mr-2" /> Pay via UPI App (GPay, PhonePe)
-                      </a>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <a href={getAppUrl('gpay')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                          <span className="font-medium text-sm">GPay</span>
+                        </a>
+                        <a href={getAppUrl('phonepe')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                          <span className="font-medium text-sm">PhonePe</span>
+                        </a>
+                        <a href={getAppUrl('paytm')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                          <span className="font-medium text-sm">Paytm</span>
+                        </a>
+                        <a href={getAppUrl('generic')} className="flex items-center justify-center p-2.5 bg-rose-600 text-white rounded-lg shadow-sm hover:bg-rose-700 transition-colors">
+                          <Smartphone className="h-4 w-4 mr-1.5" />
+                          <span className="font-medium text-sm">Other App</span>
+                        </a>
+                      </div>
                     )}
 
                     <div className="space-y-3">
