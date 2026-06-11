@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-// Assuming there's a way to verify admin, or just basic auth if used. If no session is used here, maybe just public or rely on middleware. 
-// I will check how other admin APIs are protected.
-// For now, I'll just write the generic Prisma logic.
+import { prisma } from '@/lib/db';
 export async function GET() {
   try {
     const settings = await prisma.setting.findMany();
