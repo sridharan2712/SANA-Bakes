@@ -67,7 +67,7 @@ export default function CheckoutPage() {
   });
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const upiId = "ssridharan449@oksbi";
+  const upiId = "9003363329@axl";
   const upiIntentUrl = `upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
 
   const getAppUrl = (app: 'gpay' | 'phonepe' | 'paytm' | 'generic') => {
