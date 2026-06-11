@@ -22,8 +22,9 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [isAndroid, setIsAndroid] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  
+  const [upiId, setUpiId] = useState("9003363329@axl");
+  const [upiQrImage, setUpiQrImage] = useState<string | null>(null);
   
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
@@ -67,28 +68,19 @@ export default function CheckoutPage() {
   });
 
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const upiId = "9003363329@axl";
-  const upiIntentUrl = `upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
-
-  const getAppUrl = () => {
-  const params = new URLSearchParams({
-    pa: upiId,
-    pn: "SANA Bakes",
-    am: total.toString(),
-    cu: "INR",
-  });
-
-  return `upi://pay?${params.toString()}`;
-};
 
   useEffect(() => {
-    // Basic device detection
-    const ua = navigator.userAgent;
-    setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua));
-    setIsAndroid(/Android/i.test(ua));
-    setIsIOS(/iPhone|iPad|iPod/i.test(ua));
-
-    const fetchProfile = async () => {
+    const fetchSettingsAndProfile = async () => {
+      try {
+        const settingsRes = await axios.get('/api/settings/payment');
+        if (settingsRes.data.success) {
+          const { UPI_ID, UPI_QR_IMAGE } = settingsRes.data.settings;
+          if (UPI_ID) setUpiId(UPI_ID);
+          if (UPI_QR_IMAGE) setUpiQrImage(UPI_QR_IMAGE);
+        }
+      } catch (err) {
+        console.error("Failed to load settings", err);
+      }
       try {
         const { data } = await axios.get('/api/profile');
         const p = data.profile;
@@ -146,7 +138,7 @@ export default function CheckoutPage() {
     };
 
     if (items.length > 0) {
-      fetchProfile();
+      fetchSettingsAndProfile();
     }
   }, [items.length, router]);
 
@@ -341,29 +333,16 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-semibold text-slate-900 mb-6">Payment Method (GPay / UPI)</h2>
                 
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row gap-6 items-center">
-                  <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-                    <QRCodeSVG value={getAppUrl()} size={150} />
+                  <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex-shrink-0">
+                    {upiQrImage ? (
+                      <img src={upiQrImage} alt="UPI QR Code" className="w-[150px] h-[150px] object-contain" />
+                    ) : (
+                      <QRCodeSVG value={`upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`} size={150} />
+                    )}
                   </div>
                   <div className="flex-1 space-y-4 w-full">
                     <p className="text-sm text-blue-800 font-medium">Scan QR Code or Use UPI ID to Pay</p>
                     
-                    {isMobile && (
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                          <span className="font-medium text-sm">GPay</span>
-                        </a>
-                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                          <span className="font-medium text-sm">PhonePe</span>
-                        </a>
-                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                          <span className="font-medium text-sm">Paytm</span>
-                        </a>
-                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-rose-600 text-white rounded-lg shadow-sm hover:bg-rose-700 transition-colors">
-                          <Smartphone className="h-4 w-4 mr-1.5" />
-                          <span className="font-medium text-sm">Other App</span>
-                        </a>
-                      </div>
-                    )}
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-blue-100">

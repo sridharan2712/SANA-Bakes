@@ -84,3 +84,9 @@ model Address {
   is_default Boolean @default(false)
   user       User    @relation(fields: [userId], references: [id])
 }
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

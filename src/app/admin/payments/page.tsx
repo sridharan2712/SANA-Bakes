@@ -11,6 +11,12 @@ export default function AdminPaymentsPage() {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // Settings
+  const [upiId, setUpiId] = useState('');
+  const [upiQrImage, setUpiQrImage] = useState('');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isUploadingQr, setIsUploadingQr] = useState(false);
+
   useEffect(() => {
     fetchPayments();
   }, []);
@@ -21,10 +27,57 @@ export default function AdminPaymentsPage() {
       if (data.success) {
         setPayments(data.payments);
       }
+      
+      const settingsRes = await axios.get('/api/admin/settings');
+      if (settingsRes.data.success) {
+        const { UPI_ID, UPI_QR_IMAGE } = settingsRes.data.settings;
+        if (UPI_ID) setUpiId(UPI_ID);
+        if (UPI_QR_IMAGE) setUpiQrImage(UPI_QR_IMAGE);
+      }
     } catch (error) {
-      toast.error('Failed to load payments');
+      toast.error('Failed to load data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingQr(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await axios.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        setUpiQrImage(res.data.path);
+        toast.success("QR code uploaded temporarily. Click Save Settings to apply.");
+      }
+    } catch (error) {
+      toast.error("Failed to upload QR code");
+    } finally {
+      setIsUploadingQr(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      await axios.put('/api/admin/settings', {
+        settings: {
+          UPI_ID: upiId,
+          UPI_QR_IMAGE: upiQrImage
+        }
+      });
+      toast.success("Payment settings saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save settings");
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -57,6 +110,48 @@ export default function AdminPaymentsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-900">Payment Verification</h1>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Payment Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">UPI ID</label>
+            <input 
+              type="text" 
+              value={upiId} 
+              onChange={(e) => setUpiId(e.target.value)} 
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500"
+              placeholder="e.g. 9003363329@axl"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Custom QR Code Image</label>
+            <div className="flex items-center gap-4">
+              {upiQrImage && (
+                <img src={upiQrImage} alt="QR Code" className="h-12 w-12 object-contain border border-slate-200 rounded" />
+              )}
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleQrUpload} 
+                className="text-sm"
+                disabled={isUploadingQr}
+              />
+              {isUploadingQr && <Loader2 className="animate-spin h-4 w-4 text-rose-600" />}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button 
+            onClick={saveSettings} 
+            disabled={isSavingSettings}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none disabled:opacity-50"
+          >
+            {isSavingSettings ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+            Save Settings
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
