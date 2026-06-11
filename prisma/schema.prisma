@@ -13,10 +13,10 @@ model User {
   email      String       @unique
   password   String
   role       String       @default("USER")
+  created_at DateTime     @default(now())
+  addresses  Address[]
   orders     Order[]
   profile    UserProfile?
-  addresses  Address[]
-  created_at DateTime     @default(now())
 }
 
 model Product {
@@ -34,25 +34,25 @@ model Product {
 model Order {
   id              String      @id @default(uuid())
   userId          String
-  user            User        @relation(fields: [userId], references: [id])
   total           Float
   status          String      @default("Processing")
   payment_status  String      @default("PENDING")
   payment_method  String?
   screenshot_path String?
   payment_id      String?     @unique
-  items           OrderItem[]
   created_at      DateTime    @default(now())
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
 }
 
 model OrderItem {
   id        String @id @default(uuid())
   orderId   String
-  order     Order  @relation(fields: [orderId], references: [id])
   productId String
   name      String
   price     Float
   quantity  Int
+  order     Order  @relation(fields: [orderId], references: [id])
 }
 
 model PasswordReset {
@@ -66,7 +66,6 @@ model PasswordReset {
 model UserProfile {
   id               String  @id @default(uuid())
   userId           String  @unique
-  user             User    @relation(fields: [userId], references: [id])
   mobile           String?
   alternate_mobile String?
   address_line_1   String?
@@ -75,12 +74,13 @@ model UserProfile {
   state            String?
   pincode          String?
   country          String?
+  user             User    @relation(fields: [userId], references: [id])
 }
 
 model Address {
   id         String  @id @default(uuid())
   userId     String
-  user       User    @relation(fields: [userId], references: [id])
   address    String
   is_default Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [id])
 }

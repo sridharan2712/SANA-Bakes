@@ -70,21 +70,16 @@ export default function CheckoutPage() {
   const upiId = "9003363329@axl";
   const upiIntentUrl = `upi://pay?pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
 
-  const getAppUrl = (app: 'gpay' | 'phonepe' | 'paytm' | 'generic') => {
-    const params = `pa=${upiId}&pn=SANA%20Bakes&am=${total}&cu=INR`;
-    if (isAndroid) {
-      if (app === 'gpay') return `intent://pay?${params}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
-      if (app === 'phonepe') return `intent://pay?${params}#Intent;scheme=upi;package=com.phonepe.app;end`;
-      if (app === 'paytm') return `intent://pay?${params}#Intent;scheme=upi;package=net.one97.paytm;end`;
-      return `intent://pay?${params}#Intent;scheme=upi;end`;
-    }
-    if (isIOS) {
-      if (app === 'gpay') return `gpay://upi/pay?${params}`;
-      if (app === 'phonepe') return `phonepe://pay?${params}`;
-      if (app === 'paytm') return `paytmmp://pay?${params}`;
-    }
-    return `upi://pay?${params}`;
-  };
+  const getAppUrl = () => {
+  const params = new URLSearchParams({
+    pa: upiId,
+    pn: "SANA Bakes",
+    am: total.toString(),
+    cu: "INR",
+  });
+
+  return `upi://pay?${params.toString()}`;
+};
 
   useEffect(() => {
     // Basic device detection
@@ -347,23 +342,23 @@ export default function CheckoutPage() {
                 
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl flex flex-col md:flex-row gap-6 items-center">
                   <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-                    <QRCodeSVG value={upiIntentUrl} size={150} />
+                    <QRCodeSVG value={getAppUrl()} size={150} />
                   </div>
                   <div className="flex-1 space-y-4 w-full">
                     <p className="text-sm text-blue-800 font-medium">Scan QR Code or Use UPI ID to Pay</p>
                     
                     {isMobile && (
                       <div className="grid grid-cols-2 gap-3 mb-4">
-                        <a href={getAppUrl('gpay')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                           <span className="font-medium text-sm">GPay</span>
                         </a>
-                        <a href={getAppUrl('phonepe')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                           <span className="font-medium text-sm">PhonePe</span>
                         </a>
-                        <a href={getAppUrl('paytm')} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-gray-800 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                           <span className="font-medium text-sm">Paytm</span>
                         </a>
-                        <a href={getAppUrl('generic')} className="flex items-center justify-center p-2.5 bg-rose-600 text-white rounded-lg shadow-sm hover:bg-rose-700 transition-colors">
+                        <a href={getAppUrl()} className="flex items-center justify-center p-2.5 bg-rose-600 text-white rounded-lg shadow-sm hover:bg-rose-700 transition-colors">
                           <Smartphone className="h-4 w-4 mr-1.5" />
                           <span className="font-medium text-sm">Other App</span>
                         </a>
