@@ -76,12 +76,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Production guard: warn if Cloudinary is not set up
+    // Production fallback: return Base64 data URL if Cloudinary is not configured
     if (process.env.NODE_ENV === 'production') {
+      const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`;
       return NextResponse.json({
-        success: false,
-        error: 'Image storage is not configured. Please set Cloudinary environment variables.'
-      }, { status: 503 });
+        success: true,
+        path: base64Image
+      });
     }
 
     // Fallback: Local Filesystem Storage (Development)
