@@ -5,6 +5,16 @@ import axios from 'axios';
 import { Loader2, CheckCircle2, XCircle, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+// Converts a File to a base64 data URL (no server upload needed)
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,25 +56,26 @@ export default function AdminPaymentsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Invalid file type. Please use JPG, PNG, or WEBP.');
+      return;
+    }
+    // Validate size (2MB limit for base64 storage)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File too large. Please use an image under 2MB.');
+      return;
+    }
+
     setSelectedFileName(file.name);
     setIsUploadingQr(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const res = await axios.post('/api/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      if (res.data.success) {
-        setUpiQrImage(res.data.path);
-        toast.success("QR code uploaded. Click Save Settings to apply.");
-      } else {
-        toast.error(res.data.error || "Failed to upload QR code");
-        setSelectedFileName(null);
-      }
-    } catch (error: any) {
-      const msg = error?.response?.data?.error || "Failed to upload QR code";
-      toast.error(msg);
+      const base64 = await fileToBase64(file);
+      setUpiQrImage(base64);
+      toast.success('QR image ready. Click Save Settings to apply.');
+    } catch {
+      toast.error('Failed to read image file.');
       setSelectedFileName(null);
     } finally {
       setIsUploadingQr(false);
