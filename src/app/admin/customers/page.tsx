@@ -79,7 +79,19 @@ export default function AdminCustomersPage() {
                     <td className="p-4 font-medium text-slate-900">{cust._count.orders} Orders</td>
                     <td className="p-4 text-slate-600">{new Date(cust.created_at).toLocaleDateString()}</td>
                     <td className="p-4 text-right">
-                      <button onClick={() => alert('Contacting customer...')} className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"><Phone className="h-4 w-4 inline" /></button>
+                      {cust.profile?.mobile ? (
+                        <a
+                          href={`tel:${cust.profile.mobile}`}
+                          title={`Call ${cust.name}: ${cust.profile.mobile}`}
+                          className="text-slate-400 hover:text-rose-600 transition-colors inline-flex items-center gap-1"
+                        >
+                          <Phone className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <span title="No mobile number on file" className="text-slate-200 cursor-not-allowed inline-flex items-center">
+                          <Phone className="h-4 w-4" />
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))

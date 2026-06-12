@@ -11,6 +11,9 @@ export async function GET() {
         name: true,
         email: true,
         created_at: true,
+        profile: {
+          select: { mobile: true }
+        },
         _count: {
           select: { orders: true }
         }
