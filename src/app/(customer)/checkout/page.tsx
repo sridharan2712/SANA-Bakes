@@ -281,50 +281,18 @@ export default function CheckoutPage() {
             <div className="space-y-8">
               
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <h2 className="text-xl font-semibold text-slate-900 mb-6">Contact Information</h2>
+                <h2 className="text-xl font-semibold text-slate-900 mb-6">Delivery Schedule</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input label="First Name" name="firstName" value={contactForm.firstName} onChange={handleContactChange} required />
-                  <Input label="Last Name" name="lastName" value={contactForm.lastName} onChange={handleContactChange} required />
-                  <Input label="Email Address" type="email" name="email" value={contactForm.email} onChange={handleContactChange} required className="md:col-span-2" />
-                  <Input label="Phone Number" type="tel" name="phone" value={contactForm.phone} onChange={handleContactChange} required className="md:col-span-2" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                   <h2 className="text-xl font-semibold text-slate-900">Delivery Details</h2>
-                   {addresses.length > 0 && (
-                      <select 
-                         value={selectedAddressId} 
-                         onChange={handleAddressChange}
-                         className="text-sm border-gray-300 rounded-md shadow-sm focus:border-rose-500 focus:ring-rose-500"
-                      >
-                         <option value="profile">Profile Address</option>
-                         {addresses.map(a => (
-                            <option key={a.id} value={a.id}>
-                               Saved Address {a.is_default ? '(Default)' : ''}
-                            </option>
-                         ))}
-                      </select>
-                   )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input label="Address Line 1" name="addressLine1" value={deliveryForm.addressLine1} onChange={handleDeliveryChange} required className="md:col-span-2" />
-                  <Input label="Address Line 2 (Optional)" name="addressLine2" value={deliveryForm.addressLine2} onChange={handleDeliveryChange} className="md:col-span-2" />
-                  <Input label="City" name="city" value={deliveryForm.city} onChange={handleDeliveryChange} required />
-                  <Input label="Pincode" name="pincode" value={deliveryForm.pincode} onChange={handleDeliveryChange} required />
-                  <div className="md:col-span-2 flex gap-4 mt-2">
-                    <Input label="Delivery Date" type="date" name="date" value={deliveryForm.date} onChange={handleDeliveryChange} required className="w-1/2" />
-                    <div className="w-1/2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
-                      <select name="timeSlot" value={deliveryForm.timeSlot} onChange={handleDeliveryChange} required className="flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent">
-                         <option value="">Select slot</option>
-                         <option value="10-12">10:00 AM - 12:00 PM</option>
-                         <option value="12-2">12:00 PM - 02:00 PM</option>
-                         <option value="2-4">02:00 PM - 04:00 PM</option>
-                         <option value="4-6">04:00 PM - 06:00 PM</option>
-                      </select>
-                    </div>
+                  <Input label="Delivery Date" type="date" name="date" value={deliveryForm.date} onChange={handleDeliveryChange} required />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
+                    <select name="timeSlot" value={deliveryForm.timeSlot} onChange={handleDeliveryChange} required className="flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent">
+                      <option value="">Select slot</option>
+                      <option value="10-12">10:00 AM - 12:00 PM</option>
+                      <option value="12-2">12:00 PM - 02:00 PM</option>
+                      <option value="2-4">02:00 PM - 04:00 PM</option>
+                      <option value="4-6">04:00 PM - 06:00 PM</option>
+                    </select>
                   </div>
                 </div>
               </div>
