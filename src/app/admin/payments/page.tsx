@@ -62,9 +62,9 @@ export default function AdminPaymentsPage() {
       toast.error('Invalid file type. Please use JPG, PNG, or WEBP.');
       return;
     }
-    // Validate size (2MB limit for base64 storage)
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('File too large. Please use an image under 2MB.');
+    // Validate size (500KB limit — QR codes are small; base64 expands ~33%)
+    if (file.size > 500 * 1024) {
+      toast.error('File too large. Please use an image under 500KB for QR codes.');
       return;
     }
 
@@ -85,15 +85,20 @@ export default function AdminPaymentsPage() {
   const saveSettings = async () => {
     setIsSavingSettings(true);
     try {
-      await axios.put('/api/admin/settings', {
+      const res = await axios.put('/api/admin/settings', {
         settings: {
           UPI_ID: upiId,
           UPI_QR_IMAGE: upiQrImage
         }
       });
-      toast.success("Payment settings saved successfully!");
-    } catch (error) {
-      toast.error("Failed to save settings");
+      if (res.data.success) {
+        toast.success('Payment settings saved successfully!');
+      } else {
+        toast.error(res.data.error || 'Failed to save settings');
+      }
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Failed to save settings';
+      toast.error(msg);
     } finally {
       setIsSavingSettings(false);
     }

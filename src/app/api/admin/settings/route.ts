@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const settings = await prisma.setting.findMany();
@@ -19,6 +22,10 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { settings } = body; // expect { "UPI_ID": "...", "UPI_QR_IMAGE": "..." }
 
+    if (!settings || typeof settings !== 'object') {
+      return NextResponse.json({ success: false, error: 'Invalid settings payload' }, { status: 400 });
+    }
+
     for (const [key, value] of Object.entries(settings)) {
       await prisma.setting.upsert({
         where: { key },
@@ -30,6 +37,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ success: true, message: 'Settings updated successfully' });
   } catch (error) {
     console.error('Error updating settings:', error);
-    return NextResponse.json({ success: false, error: 'Failed to update settings' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to save settings' }, { status: 500 });
   }
 }
