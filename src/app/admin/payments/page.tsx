@@ -16,6 +16,7 @@ export default function AdminPaymentsPage() {
   const [upiQrImage, setUpiQrImage] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isUploadingQr, setIsUploadingQr] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPayments();
@@ -45,6 +46,7 @@ export default function AdminPaymentsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setSelectedFileName(file.name);
     setIsUploadingQr(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -55,10 +57,15 @@ export default function AdminPaymentsPage() {
       });
       if (res.data.success) {
         setUpiQrImage(res.data.path);
-        toast.success("QR code uploaded temporarily. Click Save Settings to apply.");
+        toast.success("QR code uploaded. Click Save Settings to apply.");
+      } else {
+        toast.error(res.data.error || "Failed to upload QR code");
+        setSelectedFileName(null);
       }
-    } catch (error) {
-      toast.error("Failed to upload QR code");
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || "Failed to upload QR code";
+      toast.error(msg);
+      setSelectedFileName(null);
     } finally {
       setIsUploadingQr(false);
     }
@@ -127,18 +134,37 @@ export default function AdminPaymentsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Custom QR Code Image</label>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
               {upiQrImage && (
-                <img src={upiQrImage} alt="QR Code" className="h-12 w-12 object-contain border border-slate-200 rounded" />
+                <img src={upiQrImage} alt="QR Code" className="h-14 w-14 object-contain border border-slate-200 rounded-lg shadow-sm" />
               )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleQrUpload} 
-                className="text-sm"
+              <label
+                htmlFor="qr-upload"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-md border text-sm font-medium cursor-pointer transition-colors ${
+                  isUploadingQr
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                    : 'bg-white text-rose-600 border-rose-300 hover:bg-rose-50 hover:border-rose-500'
+                }`}
+              >
+                {isUploadingQr ? (
+                  <><Loader2 className="animate-spin h-4 w-4" /> Uploading…</>
+                ) : (
+                  <><ImageIcon className="h-4 w-4" /> {selectedFileName ? 'Change QR Image' : 'Choose QR Image'}</>
+                )}
+              </label>
+              <input
+                id="qr-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleQrUpload}
                 disabled={isUploadingQr}
+                className="sr-only"
               />
-              {isUploadingQr && <Loader2 className="animate-spin h-4 w-4 text-rose-600" />}
+              {selectedFileName && !isUploadingQr && (
+                <span className="text-xs text-slate-500 truncate max-w-[160px]" title={selectedFileName}>
+                  {selectedFileName}
+                </span>
+              )}
             </div>
           </div>
         </div>

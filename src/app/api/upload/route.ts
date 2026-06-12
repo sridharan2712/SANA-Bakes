@@ -22,7 +22,7 @@ async function getUserId(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const userId = await getUserId(request);
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ success: false, error: 'Unauthorized. Please log in.' }, { status: 401 });
   }
 
   try {
@@ -74,6 +74,14 @@ export async function POST(request: NextRequest) {
         success: true, 
         path: uploadResult.secure_url 
       });
+    }
+
+    // Production guard: warn if Cloudinary is not set up
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({
+        success: false,
+        error: 'Image storage is not configured. Please set Cloudinary environment variables.'
+      }, { status: 503 });
     }
 
     // Fallback: Local Filesystem Storage (Development)
