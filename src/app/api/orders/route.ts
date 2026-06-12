@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const userId = payload.id as string;
 
     const body = await request.json();
-    const { items, total, screenshot_path, payment_method, payment_id } = body;
+    const { items, total, screenshot_path, payment_method, payment_id, delivery_date, time_slot, delivery_address } = body;
 
     if (!items || !total || !screenshot_path) {
       return NextResponse.json({ error: 'Missing required order details' }, { status: 400 });
@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
         payment_method: payment_method || "UPI",
         screenshot_path,
         payment_id: payment_id || null,
+        delivery_date: delivery_date || null,
+        time_slot: time_slot || null,
+        delivery_address: delivery_address || null,
         items: {
           create: items.map((item: any) => ({
             productId: item.id,

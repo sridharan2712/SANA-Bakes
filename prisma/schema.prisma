@@ -43,6 +43,10 @@ model Order {
   created_at      DateTime    @default(now())
   user            User        @relation(fields: [userId], references: [id])
   items           OrderItem[]
+  
+  delivery_date     String?
+  time_slot         String?
+  delivery_address  String?
 }
 
 model OrderItem {

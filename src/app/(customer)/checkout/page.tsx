@@ -214,11 +214,16 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+      const deliveryAddress = `${deliveryForm.addressLine1}${deliveryForm.addressLine2 ? ', ' + deliveryForm.addressLine2 : ''}, ${deliveryForm.city} - ${deliveryForm.pincode}`;
+
       const dbRes = await axios.post('/api/orders', {
         items,
         total,
         screenshot_path: screenshotPath,
-        payment_method: 'UPI'
+        payment_method: 'UPI',
+        delivery_date: deliveryForm.date,
+        time_slot: deliveryForm.timeSlot,
+        delivery_address: deliveryAddress
       });
 
       if (dbRes.data.success) {
