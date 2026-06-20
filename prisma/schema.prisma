@@ -50,13 +50,17 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(uuid())
-  orderId   String
-  productId String
-  name      String
-  price     Float
-  quantity  Int
-  order     Order  @relation(fields: [orderId], references: [id])
+  id           String   @id @default(uuid())
+  orderId      String
+  productId    String
+  name         String
+  price        Float
+  quantity     Int
+  message      String?
+  weightLabel  String?
+  isEggless    Boolean? @default(false)
+  shape        String?
+  order        Order    @relation(fields: [orderId], references: [id])
 }
 
 model PasswordReset {

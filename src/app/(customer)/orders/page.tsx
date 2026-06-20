@@ -11,6 +11,10 @@ interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  message?: string | null;
+  weightLabel?: string | null;
+  isEggless?: boolean | null;
+  shape?: string | null;
 }
 
 interface Order {
@@ -82,14 +86,32 @@ export default function OrdersPage() {
 
                     <div className="space-y-4 mb-8">
                       {order.items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between text-slate-700 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                          <div className="flex items-center">
-                            <div className="bg-rose-100 p-2 rounded-lg mr-3">
+                        <div key={item.id} className="flex items-start justify-between text-slate-700 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                          <div className="flex items-start">
+                            <div className="bg-rose-100 p-2 rounded-lg mr-3 mt-0.5">
                               <Package className="h-5 w-5 text-rose-600" />
                             </div>
                             <div>
                               <p className="font-bold text-slate-800">{item.name}</p>
-                              <p className="text-sm text-slate-500">Qty: {item.quantity}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Qty: {item.quantity} • ₹{item.price} each</p>
+                              
+                              {/* Customizations details */}
+                              {(item.weightLabel || item.shape || item.isEggless || item.message) && (
+                                <div className="mt-2 space-y-1 bg-white p-2 rounded-lg border border-slate-100 text-[11px] max-w-xs shadow-sm">
+                                  {(item.weightLabel || item.shape || item.isEggless) && (
+                                    <div className="flex flex-wrap gap-1.5 text-slate-600 font-medium">
+                                      {item.weightLabel && <span className="bg-slate-100 px-1.5 py-0.5 rounded">{item.weightLabel}</span>}
+                                      {item.shape && <span className="bg-slate-100 px-1.5 py-0.5 rounded">{item.shape}</span>}
+                                      {item.isEggless && <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold">Eggless</span>}
+                                    </div>
+                                  )}
+                                  {item.message && (
+                                    <div className="text-rose-700 font-semibold mt-1 flex items-center gap-1">
+                                      🎂 Message: <span className="italic font-medium text-slate-700">"{item.message}"</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="text-right">

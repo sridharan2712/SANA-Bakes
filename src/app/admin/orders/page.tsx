@@ -338,12 +338,32 @@ export default function AdminOrdersPage() {
                     </div>
                     <div className="space-y-3 max-h-40 overflow-y-auto pr-1">
                       {selectedOrder.items.map((item: any) => (
-                        <div key={item.id} className="flex justify-between items-center text-sm border-b border-slate-50 pb-2 last:border-0 last:pb-0">
-                          <div className="flex-1 pr-4">
-                            <p className="font-medium text-slate-800">{item.name}</p>
-                            <p className="text-xs text-slate-400">Qty: {item.quantity} • ₹{item.price} each</p>
+                        <div key={item.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start text-sm">
+                            <div className="flex-1 pr-4">
+                              <p className="font-semibold text-slate-800">{item.name}</p>
+                              <p className="text-xs text-slate-500">Qty: {item.quantity} • ₹{item.price} each</p>
+                              
+                              {/* Customizations details */}
+                              {(item.weightLabel || item.shape || item.isEggless || item.message) && (
+                                <div className="mt-1.5 space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px]">
+                                  {(item.weightLabel || item.shape || item.isEggless) && (
+                                    <div className="flex flex-wrap gap-1.5 text-slate-600 font-medium">
+                                      {item.weightLabel && <span className="bg-slate-200/60 px-1.5 py-0.5 rounded">{item.weightLabel}</span>}
+                                      {item.shape && <span className="bg-slate-200/60 px-1.5 py-0.5 rounded">{item.shape}</span>}
+                                      {item.isEggless && <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Eggless</span>}
+                                    </div>
+                                  )}
+                                  {item.message && (
+                                    <div className="text-rose-700 font-semibold mt-1">
+                                      🎂 Message: <span className="italic">"{item.message}"</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <span className="font-bold text-slate-900 text-sm whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString()}</span>
                           </div>
-                          <span className="font-bold text-slate-900">₹{(item.price * item.quantity).toLocaleString()}</span>
                         </div>
                       ))}
                     </div>

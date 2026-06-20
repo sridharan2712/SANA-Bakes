@@ -388,10 +388,18 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-6">Order Summary</h2>
               <div className="space-y-4 mb-6">
                 {items.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm">
+                  <div key={item.id} className="flex justify-between text-sm border-b border-slate-50 pb-2 last:border-0 last:pb-0">
                     <div className="flex-1 pr-4">
                       <p className="font-medium text-slate-900 line-clamp-1">{item.name}</p>
-                      <p className="text-slate-500">Qty: {item.quantity}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Qty: {item.quantity}
+                        {(item.weightLabel || item.shape || item.isEggless) && ` • ${item.weightLabel || ''} ${item.isEggless ? '• Eggless' : ''} ${item.shape ? `• ${item.shape}` : ''}`}
+                      </p>
+                      {item.message && (
+                        <p className="text-[11px] text-rose-600 font-medium italic mt-1 flex items-center gap-1">
+                          🎂 "{item.message}"
+                        </p>
+                      )}
                     </div>
                     <p className="font-semibold text-slate-900 whitespace-nowrap">₹{(item.price * item.quantity).toLocaleString()}</p>
                   </div>

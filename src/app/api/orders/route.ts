@@ -66,10 +66,14 @@ export async function POST(request: NextRequest) {
         delivery_address: delivery_address || null,
         items: {
           create: items.map((item: any) => ({
-            productId: item.id,
+            productId: item.productId || item.id,
             name: item.name,
             price: item.price,
             quantity: item.quantity,
+            message: item.message || null,
+            weightLabel: item.weightLabel || null,
+            isEggless: item.isEggless || false,
+            shape: item.shape || null,
           })),
         },
       },
