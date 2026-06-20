@@ -39,15 +39,12 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex-shrink-0 flex items-center">
-            <Link href="/" className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center">
               <img
                 src="/logo.jpg"
                 alt="Sana Bakes Logo"
-                className="h-12 w-12 rounded-full object-cover border border-gray-100 shadow-sm"
+                className="h-14 w-14 object-contain drop-shadow-sm"
               />
-              <span className="text-2xl font-serif font-bold tracking-tight text-slate-900">
-                SANA<span className="text-rose-600">.</span>
-              </span>
             </Link>
           </div>
           

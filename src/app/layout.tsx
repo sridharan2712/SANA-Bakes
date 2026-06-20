@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SANA Bakes | Corporate Online Bakery",
+  title: "SANA Bakes",
   description: "Enterprise-grade online bakery platform",
 };
 
